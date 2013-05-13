@@ -563,22 +563,4 @@ fail:
 	return ret;
 }
 
-/* Public functions */
-
-void power_debug_collapse(void)
-{
-	int i;
-	if (debug_mask) {
-		pr_info("%s save sleep state\n", __func__);
-		for (i = 0 ; i < DUMP_DEV_NUM ; i++) {
-			struct dump_desc *dump_device = &dump_devices[i];
-			if (dump_device->sleep_data)
-				dump_device->store(dump_device->dev,
-					dump_device->sleep_data,
-					dump_device->item_count);
-		}
-		sleep_saved = true;
-	}
-}
-
 late_initcall(power_debug_init);
