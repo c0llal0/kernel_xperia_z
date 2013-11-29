@@ -1638,6 +1638,8 @@ config MSM_CPU_FREQ_MIN
 	depends on MSM_CPU_FREQ_SET_MIN_MAX
 	default 245760
 
+endif # CPU_FREQ_MSM
+
 config MSM_SLEEPER
 	bool "Limit max frequency while screen is off"
 	default y
@@ -1649,9 +1651,13 @@ config CPU_VOLTAGE_TABLE
 	default n
 	help
 	  Krait User Votlage Control
-
-endif # CPU_FREQ_MSM
-
+	  
+config GPU_OVERCLOCK
+	bool "Enable GPU Overclocking option"
+	default n
+	help
+	  GPU OC to 487.5Mhz
+	  
 config MSM_AVS_HW
 	bool "Enable Adaptive Voltage Scaling (AVS)"
 	default n
