@@ -47,6 +47,11 @@ struct pm8xxx_vib {
 
 static struct pm8xxx_vib *vib_dev;
 
+static ssize_t show_vib_level(struct device *dev, struct device_attribute *attr, char *buf);
+static ssize_t set_vib_level(struct device *dev, struct device_attribute *attr, const char *buf, size_t count);
+
+static DEVICE_ATTR(vib_level, S_IRUSR|S_IWUSR, &show_vib_level, &set_vib_level);
+
 int pm8xxx_vibrator_config(struct pm8xxx_vib_config *vib_config)
 {
 	u8 reg = 0;
@@ -275,11 +280,30 @@ static int __devinit pm8xxx_vib_probe(struct platform_device *pdev)
 
 	vib_dev = vib;
 
+	device_create_file(vib->timed_dev.dev, &dev_attr_vib_level);
+
 	return 0;
 
 err_read_vib:
 	kfree(vib);
 	return rc;
+}
+
+static ssize_t show_vib_level(struct device *dev, struct device_attribute *attr, char *buf) {
+	return sprintf(buf, "%d\n", 100*vib_dev->level );
+}
+
+static ssize_t set_vib_level(struct device *dev, struct device_attribute *attr, const char *buf, size_t count) {
+	long value;
+
+	if (kstrtol(buf, 10, &value) != 0)
+		return count;
+
+	if (value <= VIB_MAX_LEVEL_mV && value >= VIB_MIN_LEVEL_mV) {
+		vib_dev->level = (int)(value / 100);
+	}
+
+	return count;
 }
 
 static int __devexit pm8xxx_vib_remove(struct platform_device *pdev)
