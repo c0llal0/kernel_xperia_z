@@ -146,3 +146,5 @@ obj-$(CONFIG_CORESIGHT)		+= coresight/
 #sensor_class
 obj-$(CONFIG_SENSORS)		+= sensors/
 
+# backoff
+obj-$(CONFIG_SUSPEND_BACKOFF)		+= backoff/
