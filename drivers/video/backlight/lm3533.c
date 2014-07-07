@@ -194,11 +194,7 @@ void lm3533_backlight_on(int level)
 	if (backlight_status == BL_OFF) {
 		lm3533_hw_reset();
 		lm3533_write_reg(main_lm3533_dev->client, 0x10, 0x0);
-#if defined(CONFIG_LGE_BACKLIGHT_CABC)
-		lm3533_write_reg(main_lm3533_dev->client, 0x14, 0x1);
-#else
 		lm3533_write_reg(main_lm3533_dev->client, 0x14, 0x0);
-#endif
 		lm3533_write_reg(main_lm3533_dev->client, 0x1A, 0x00);
 		lm3533_write_reg(main_lm3533_dev->client, 0x1F, 0x13);
 		lm3533_write_reg(main_lm3533_dev->client, 0x27, 0x1);
