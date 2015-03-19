@@ -172,17 +172,19 @@ kgsl_process_uninit_sysfs(struct kgsl_process_private *private)
 	kobject_put(&private->kobj);
 }
 
-void
+int
 kgsl_process_init_sysfs(struct kgsl_process_private *private)
 {
 	unsigned char name[16];
-	int i, ret;
+	int i, ret = 0;
 
 	snprintf(name, sizeof(name), "%d", private->pid);
 
-	if (kobject_init_and_add(&private->kobj, &ktype_mem_entry,
-		kgsl_driver.prockobj, name))
-		return;
+	ret = kobject_init_and_add(&private->kobj, &ktype_mem_entry,
+		kgsl_driver.prockobj, name);
+
+	if (ret)
+		return ret;
 
 	for (i = 0; i < ARRAY_SIZE(mem_stats); i++) {
 		/* We need to check the value of sysfs_create_file, but we
@@ -193,6 +195,7 @@ kgsl_process_init_sysfs(struct kgsl_process_private *private)
 		ret = sysfs_create_file(&private->kobj,
 			&mem_stats[i].max_attr.attr);
 	}
+	return ret;
 }
 
 static int kgsl_drv_memstat_show(struct device *dev,
@@ -334,6 +337,11 @@ static int kgsl_page_alloc_vmfault(struct kgsl_memdesc *memdesc,
 
 			page = nth_page(page, pgoff);
 
+			if (!memdesc->faulted[pgoff]) {
+				memdesc->faulted[pgoff] = 1;
+				__inc_zone_page_state(page, NR_FILE_PAGES);
+			}
+
 			get_page(page);
 			vmf->page = page;
 
@@ -364,12 +372,28 @@ static void kgsl_page_alloc_free(struct kgsl_memdesc *memdesc)
 		vunmap(memdesc->hostptr);
 		kgsl_driver.stats.vmalloc -= memdesc->size;
 	}
-	if (memdesc->sg)
+	if (memdesc->sg) {
+		size_t pgindex = 0;
 		for_each_sg(memdesc->sg, sg, sglen, i){
+			struct page *page;
+			unsigned int j, npages;
 			if (sg->length == 0)
 				break;
-			__free_pages(sg_page(sg), get_order(sg->length));
+
+			page = sg_page(sg);
+			npages = sg->length >> PAGE_SHIFT;
+
+			for (j = 0; j < npages; ++j) {
+				if (memdesc->faulted[pgindex]) {
+					__dec_zone_page_state(page + j,
+							      NR_FILE_PAGES);
+					memdesc->faulted[pgindex] = 0;
+				}
+				++pgindex;
+			}
+			__free_pages(page, get_order(sg->length));
 		}
+	}
 }
 
 static int kgsl_contiguous_vmflags(struct kgsl_memdesc *memdesc)
@@ -554,6 +578,13 @@ _kgsl_sharedmem_page_alloc(struct kgsl_memdesc *memdesc,
 
 	memdesc->pagetable = pagetable;
 	memdesc->ops = &kgsl_page_alloc_ops;
+
+	memdesc->faulted = kzalloc(sglen_alloc*sizeof(int), GFP_KERNEL);
+
+	if (memdesc->faulted == NULL) {
+		ret = -ENOMEM;
+		goto done;
+	}
 
 	memdesc->sglen_alloc = sglen_alloc;
 	memdesc->sg = kgsl_sg_alloc(memdesc->sglen_alloc);
@@ -775,6 +806,7 @@ void kgsl_sharedmem_free(struct kgsl_memdesc *memdesc)
 		memdesc->ops->free(memdesc);
 
 	kgsl_sg_free(memdesc->sg, memdesc->sglen_alloc);
+	kfree(memdesc->faulted);
 
 	memset(memdesc, 0, sizeof(*memdesc));
 }
