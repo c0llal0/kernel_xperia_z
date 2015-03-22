@@ -1,3 +1,22 @@
+#!/bin/sh
+
+### checkout correct prima sources if needed
+PRIMA_PATH="drivers/staging/prima"
+PRIMA_GIT="https://github.com/adrian-bl-yuga/caf_prima.git"
+
+if [ ! -d ${PRIMA_PATH}/.git ] ; then
+	echo "found in-kernel prima sources, replacing them"
+	echo "with a copy of $PRIMA_GIT in 2 sec..."
+	sleep 2
+
+	echo "-> removing old source tree..."
+	rm -rf $PRIMA_PATH
+
+	echo "-> cloning $PRIMA_GIT"
+	git clone $PRIMA_GIT $PRIMA_PATH
+fi
+### end prima
+
 
 export TCHAIN=../../../prebuilts/gcc/linux-x86/arm/arm-eabi-4.8/bin/arm-eabi-
 
