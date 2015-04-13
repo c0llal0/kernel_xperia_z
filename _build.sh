@@ -29,7 +29,7 @@ cp arch/arm/boot/zImage ../../../device/sony/c6603/kernel
 
 # drop kernel modules
 cp ./drivers/staging/prima/wlan.ko  ../../../vendor/sony/yuga_blobs/system/lib/modules/wlan.ko
-cp ./drivers/media/radio/radio-iris-transport.ko ../../../vendor/sony/yuga_blobs/system/lib/modules/radio-iris-transport.ko
+# cp ./drivers/media/radio/radio-iris-transport.ko ../../../vendor/sony/yuga_blobs/system/lib/modules/radio-iris-transport.ko
 
 # refresh kernel headers
 ( cd ../../../device/sony/lagan/ && sh update_kernel_headers.sh )
