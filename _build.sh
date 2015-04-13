@@ -21,8 +21,8 @@ fi
 export TCHAIN=../../../prebuilts/gcc/linux-x86/arm/arm-eabi-4.8/bin/arm-eabi-
 
 make ARCH=arm clean
-make ARCH=arm CROSS_COMPILE=$TCHAIN fusion3_yuga_defconfig
-make ARCH=arm CROSS_COMPILE=$TCHAIN -j 8
+make ARCH=arm CROSS_COMPILE=$TCHAIN ns_yuga_defconfig
+make ARCH=arm CROSS_COMPILE=$TCHAIN -j 8 > build.log 2>&1
 
 # add new kernel
 cp arch/arm/boot/zImage ../../../device/sony/c6603/kernel 
